@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form, Input, Space } from 'antd';
+import HttpService from '../utils/HttpService';
 
 const tailLayout = {
     wrapperCol: {
@@ -27,9 +28,20 @@ function Register() {
     };
 
     const onFinish = (values) => {
-        console.log('Success:', values);
-        alert('注册成功！');
-        navigate('/login');
+        HttpService.post('/register', values)
+            .then(res => {
+                console.log('Success:', values);
+                console.log(res);
+                if (res.status === 'ok') {
+                    alert('注册成功！');
+                    navigate('/login');
+                } else {
+                    alert('注册失败');
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            });
     };
     const onFinishFailed = (errorInfo) => {
         console.log('Failed:', errorInfo);

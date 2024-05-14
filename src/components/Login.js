@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Checkbox, Form, Input, Space } from 'antd';
+import HttpService from '../utils/HttpService';
 
 const tailLayout = {
     wrapperCol: {
@@ -21,6 +22,19 @@ function Login() {
 
     const onFinish = (values) => {
         console.log('Success:', values);
+        HttpService.post('/login', values)
+            .then(res => {
+                console.log(res);
+                if (res.status === 'ok') {
+                    sessionStorage.setItem('token', res.token);
+                    navigate('/home');
+                } else {
+                    alert('登录失败');
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            });
     };
     const onFinishFailed = (errorInfo) => {
         console.log('Failed:', errorInfo);
