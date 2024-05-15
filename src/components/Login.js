@@ -27,7 +27,7 @@ function Login() {
                 console.log(res);
                 if (res.status === 'ok') {
                     sessionStorage.setItem('token', res.token);
-                    navigate('/home');
+                    navigate('/dashboard');
                 } else {
                     alert('登录失败');
                 }
