@@ -1,6 +1,6 @@
-# Getting Started with Create React App
+# 基于Node.js的商城后台系统的后端部分
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+这个后端项目服务于main分支的商城后台管理系统的前端。
 
 ## Available Scripts
 
