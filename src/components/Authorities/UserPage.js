@@ -32,34 +32,78 @@ var initialData = [
 ];
 
 export default function UserPage() {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [roleForm] = Form.useForm();
+    const [userForm] = Form.useForm();
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
-    const showModal = () => {
-        setIsModalOpen(true);
+    const showUserModal = () => {
+        setIsUserModalOpen(true);
     };
-    const handleOk = () => {
-        setIsModalOpen(false);
+    const handleUserOk = () => {
+        setIsUserModalOpen(false);
+        setIsAddModalOpen(false);
+        // 在这里添加处理提交的代码
+        console.log('提交', userForm.getFieldsValue());
     };
-    const handleCancel = () => {
-        setIsModalOpen(false);
+    const handleUserCancel = () => {
+        setIsUserModalOpen(false);
+        setIsAddModalOpen(false);
+    };
+
+    const showRoleModal = () => {
+        setIsRoleModalOpen(true);
+    };
+    const handleRoleOk = () => {
+        setIsRoleModalOpen(false);
+        // 在这里添加分配角色的代码
+        console.log('分配角色', roleForm.getFieldsValue());
+    };
+    const handleRoleCancel = () => {
+        setIsRoleModalOpen(false);
     };
 
     const handleRole = (id) => {
         // 在这里添加处理分配角色的代码
         console.log('分配角色', id);
+        roleForm.setFieldsValue({
+            roles: ['admin', 'order'],
+        });
+        showRoleModal();
     };
 
-    const handleEdit = (id) => {
+    const handleEdit = (record) => {
         // 在这里添加处理编辑的代码
-        console.log('编辑', id);
+        console.log('编辑', record.id);
+        userForm.setFieldsValue({
+            username: record.username,
+            email: record.email,
+            password: 'password',
+            isEnabled: record.isEnabled
+        });
         // 打开对话框
-        showModal();
+        showUserModal();
     };
 
     const handleDelete = (id) => {
-        // 在这里添加处理删除的代码
-        console.log('删除', id);
+        // 找到对应的数据项
+        const item = data.find(item => item.id === id);
+        if (item) {
+            // 删除数据项
+            data.splice(data.indexOf(item), 1);
+            // 更新组件的状态以重新渲染
+            setData([...data]);
+        }
+        console.log('删除', userForm.getFieldsValue());
     };
+
+    // 添加用户
+    const handleAdd = () => {
+        userForm.resetFields();
+        setIsAddModalOpen(true);
+    }
+
     // 创建状态变量和设置函数
     const [data, setData] = useState(initialData);
 
@@ -121,16 +165,34 @@ export default function UserPage() {
             render: (record) => (
                 <Space size="middle">
                     <Button type="link" onClick={() => handleRole(record.id)}>分配角色</Button>
-                    <Button type="link" onClick={() => handleEdit(record.id)}>编辑</Button>
                     <Modal
-                        title="编辑用户信息"
-                        open={isModalOpen}
-                        onOk={handleOk}
-                        onCancel={handleCancel}
+                        title="分配角色"
+                        open={isRoleModalOpen}
+                        onOk={handleRoleOk}
+                        onCancel={handleRoleCancel}
                         okText="确定"
                         cancelText="取消"
                     >
-                        <Form>
+                        <Form form={roleForm}>
+                            <Form.Item label="角色" name="roles" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Checkbox.Group>
+                                    <Checkbox value="admin">超级管理员</Checkbox>
+                                    <Checkbox value="product">商品管理员</Checkbox>
+                                    <Checkbox value="order">订单管理员</Checkbox>
+                                </Checkbox.Group>
+                            </Form.Item>
+                        </Form>
+                    </Modal>
+                    <Button type="link" onClick={() => handleEdit(record)}>编辑</Button>
+                    <Modal
+                        title="编辑用户信息"
+                        open={isUserModalOpen}
+                        onOk={handleUserOk}
+                        onCancel={handleUserCancel}
+                        okText="确定"
+                        cancelText="取消"
+                    >
+                        <Form form={userForm}>
                             <Form.Item label="用户名" name="username" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
                                 <Input />
                             </Form.Item>
@@ -180,6 +242,30 @@ export default function UserPage() {
                 }}
             >
                 <ProfileOutlined /> 数据列表
+                <Button style={{ position: 'absolute', right: '30px' }} onClick={handleAdd}>添加</Button>
+                <Modal
+                    title="添加用户"
+                    open={isAddModalOpen}
+                    onOk={handleUserOk}
+                    onCancel={handleUserCancel}
+                    okText="确定"
+                    cancelText="取消"
+                >
+                    <Form form={userForm}>
+                        <Form.Item label="用户名" name="username" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                            <Input />
+                        </Form.Item>
+                        <Form.Item label="邮箱" name="email" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                            <Input />
+                        </Form.Item>
+                        <Form.Item label="密码" name="password" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                            <Input.Password />
+                        </Form.Item>
+                        <Form.Item label="是否启用" name="isEnabled" valuePropName="checked" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                            <Checkbox />
+                        </Form.Item>
+                    </Form>
+                </Modal>
             </Card>
             <Card
                 style={{
