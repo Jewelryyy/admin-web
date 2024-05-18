@@ -1,35 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox } from 'antd';
 import { ProfileOutlined } from '@ant-design/icons';
+import HttpService from '../../utils/HttpService';
 
 const { Search } = Input;
-
-var initialData = [
-    {
-        id: '001',
-        username: 'john123',
-        email: 'johnbrown@example.com',
-        addTime: '2022-01-01 12:00:00',
-        lastLogin: '2022-01-02 12:00:00',
-        isEnabled: true,
-    },
-    {
-        id: '002',
-        username: 'jim123',
-        email: 'jimgreen@example.com',
-        addTime: '2022-01-01 12:00:00',
-        lastLogin: '2022-01-02 12:00:00',
-        isEnabled: false,
-    },
-    {
-        id: '003',
-        username: 'joe123',
-        email: 'joeblack@example.com',
-        addTime: '2022-01-01 12:00:00',
-        lastLogin: '2022-01-02 12:00:00',
-        isEnabled: true,
-    },
-];
 
 export default function UserPage() {
     const [roleForm] = Form.useForm();
@@ -37,6 +11,17 @@ export default function UserPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+
+    // 创建状态变量和设置函数
+    const [data, setData] = useState([]);
+    // 在组件挂载时获取用户列表
+    useEffect(() => {
+        HttpService.get('/user/list').then(res => {
+            if (res.code === 200) {
+                setData(res.data);
+            }
+        });
+    }, []);
 
     const showUserModal = () => {
         setIsUserModalOpen(true);
@@ -46,6 +31,16 @@ export default function UserPage() {
         setIsAddModalOpen(false);
         // 在这里添加处理提交的代码
         console.log('提交', userForm.getFieldsValue());
+        HttpService.put('/user', userForm.getFieldsValue()).then(res => {
+            if (res.code === 200) {
+                console.log('修改成功');
+            }
+        });
+        HttpService.get('/user/list').then(res => {
+            if (res.code === 200) {
+                setData(res.data);
+            }
+        });
     };
     const handleUserCancel = () => {
         setIsUserModalOpen(false);
@@ -77,9 +72,10 @@ export default function UserPage() {
         // 在这里添加处理编辑的代码
         console.log('编辑', record.id);
         userForm.setFieldsValue({
+            id: record.id,
             username: record.username,
             email: record.email,
-            password: 'password',
+            password: record.password,
             isEnabled: record.isEnabled
         });
         // 打开对话框
@@ -95,6 +91,11 @@ export default function UserPage() {
             // 更新组件的状态以重新渲染
             setData([...data]);
         }
+        HttpService.delete('/user', { id: id }).then(res => {
+            if (res.code === 200) {
+                console.log('删除成功');
+            }
+        });
         console.log('删除', userForm.getFieldsValue());
     };
 
@@ -103,9 +104,6 @@ export default function UserPage() {
         userForm.resetFields();
         setIsAddModalOpen(true);
     }
-
-    // 创建状态变量和设置函数
-    const [data, setData] = useState(initialData);
 
     const handleToggleEnabled = (id) => {
         // 找到对应的数据项
@@ -193,6 +191,9 @@ export default function UserPage() {
                         cancelText="取消"
                     >
                         <Form form={userForm}>
+                            <Form.Item label="ID" name="id" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Input disabled />
+                            </Form.Item>
                             <Form.Item label="用户名" name="username" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
                                 <Input />
                             </Form.Item>
