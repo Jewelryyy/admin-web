@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox } from 'antd';
+import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox, message } from 'antd';
 import { ProfileOutlined } from '@ant-design/icons';
 import HttpService from '../../utils/HttpService';
 
 const { Search } = Input;
 
 export default function UserPage() {
+    const [messageApi, contextHolder] = message.useMessage();
+    const [currentUserId, setCurrentUserId] = useState(0); // 用于保存当前用户的ID
+    const [roles, setRoles] = useState([]);
     const [roleForm] = Form.useForm();
     const [userForm] = Form.useForm();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -27,21 +30,42 @@ export default function UserPage() {
         setIsUserModalOpen(true);
     };
     const handleUserOk = () => {
-        setIsUserModalOpen(false);
-        setIsAddModalOpen(false);
-        // 在这里添加处理提交的代码
-        console.log('提交', userForm.getFieldsValue());
-        HttpService.put('/user', userForm.getFieldsValue()).then(res => {
-            if (res.code === 200) {
-                console.log('修改成功');
-            }
-        });
-        HttpService.get('/user/list').then(res => {
-            if (res.code === 200) {
-                setData(res.data);
-            }
-        });
+        // 如果UserModal是打开的，说明是编辑用户信息
+        if (isUserModalOpen) {
+            HttpService.put('/user', userForm.getFieldsValue()).then(res => {
+                if (res.code === 200) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '更新成功',
+                    });
+                    HttpService.get('/user/list').then(res => {
+                        if (res.code === 200) {
+                            setData(res.data);
+                        }
+                    });
+                }
+            });
+            setIsUserModalOpen(false);
+        }
+        // 如果AddModal是打开的，说明是添加用户
+        if (isAddModalOpen) {
+            HttpService.post('/user', userForm.getFieldsValue()).then(res => {
+                if (res.code === 200) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '添加成功',
+                    });
+                    HttpService.get('/user/list').then(res => {
+                        if (res.code === 200) {
+                            setData(res.data);
+                        }
+                    });
+                }
+            });
+            setIsAddModalOpen(false);
+        }
     };
+
     const handleUserCancel = () => {
         setIsUserModalOpen(false);
         setIsAddModalOpen(false);
@@ -54,6 +78,14 @@ export default function UserPage() {
         setIsRoleModalOpen(false);
         // 在这里添加分配角色的代码
         console.log('分配角色', roleForm.getFieldsValue());
+        HttpService.post('/user/assign', { userId: currentUserId, roleIdList: roleForm.getFieldsValue().roles }).then(res => {
+            if (res.code === 200) {
+                messageApi.open({
+                    type: 'success',
+                    content: '分配成功',
+                });
+            }
+        });
     };
     const handleRoleCancel = () => {
         setIsRoleModalOpen(false);
@@ -62,17 +94,31 @@ export default function UserPage() {
     const handleRole = (id) => {
         // 在这里添加处理分配角色的代码
         console.log('分配角色', id);
-        roleForm.setFieldsValue({
-            roles: ['admin', 'order'],
+        setCurrentUserId(id);
+        HttpService.get('/role').then(res => {
+            if (res.code === 200) {
+                setRoles(res.data);
+                HttpService.get('/user/rolelist', { userId: id }).then(res => {
+                    if (res.code === 200) {
+                        console.log('用户角色', res.data);
+                        roleForm.setFieldsValue({ roles: res.data });
+                    }
+                });
+                showRoleModal();
+            } else {
+                messageApi.open({
+                    type: 'error',
+                    content: res.message,
+                });
+            }
         });
-        showRoleModal();
     };
 
     const handleEdit = (record) => {
         // 在这里添加处理编辑的代码
-        console.log('编辑', record.id);
+        console.log('编辑', record.userId);
         userForm.setFieldsValue({
-            id: record.id,
+            userId: record.userId,
             username: record.username,
             email: record.email,
             password: record.password,
@@ -84,7 +130,7 @@ export default function UserPage() {
 
     const handleDelete = (id) => {
         // 找到对应的数据项
-        const item = data.find(item => item.id === id);
+        const item = data.find(item => item.userId === id);
         if (item) {
             // 删除数据项
             data.splice(data.indexOf(item), 1);
@@ -93,10 +139,17 @@ export default function UserPage() {
         }
         HttpService.delete('/user', { id: id }).then(res => {
             if (res.code === 200) {
-                console.log('删除成功');
+                HttpService.get('/user/list').then(res => {
+                    if (res.code === 200) {
+                        setData(res.data);
+                    }
+                });
+                messageApi.open({
+                    type: 'success',
+                    content: '删除成功',
+                });
             }
         });
-        console.log('删除', userForm.getFieldsValue());
     };
 
     // 添加用户
@@ -107,20 +160,39 @@ export default function UserPage() {
 
     const handleToggleEnabled = (id) => {
         // 找到对应的数据项
-        const item = data.find(item => item.id === id);
+        const item = data.find(item => item.userId === id);
         if (item) {
             // 切换 isEnabled 属性的值
             item.isEnabled = !item.isEnabled;
+            let param = {
+                userId: item.userId,
+                username: item.username,
+                email: item.email,
+                password: item.password,
+                isEnabled: item.isEnabled
+            };
             // 更新组件的状态以重新渲染
-            setData([...data]);
+            HttpService.put('/user', param).then(res => {
+                if (res.code === 200) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '更新成功',
+                    });
+                    HttpService.get('/user/list').then(res => {
+                        if (res.code === 200) {
+                            setData(res.data);
+                        }
+                    });
+                }
+            });
         }
     };
 
     const columns = [
         {
             title: '编号',
-            dataIndex: 'id',
-            key: 'id',
+            dataIndex: 'userId',
+            key: 'userId',
             align: 'center',
         },
         {
@@ -140,12 +212,20 @@ export default function UserPage() {
             dataIndex: 'addTime',
             key: 'addTime',
             align: 'center',
+            render: text => {
+                const date = new Date(text);
+                return date.toLocaleString();
+            },
         },
         {
             title: '最后登录',
             dataIndex: 'lastLogin',
             key: 'lastLogin',
             align: 'center',
+            render: text => {
+                const date = new Date(text);
+                return text ? date.toLocaleString() : 'N/A'; // 如果日期为空，将显示'N/A'
+            },
         },
         {
             title: '是否启用',
@@ -153,7 +233,7 @@ export default function UserPage() {
             key: 'isEnabled',
             align: 'center',
             render: (isEnabled, record) => (
-                <Switch checked={isEnabled} onChange={() => handleToggleEnabled(record.id)} />
+                <Switch checked={isEnabled} onChange={() => handleToggleEnabled(record.userId)} />
             ),
         },
         {
@@ -162,7 +242,7 @@ export default function UserPage() {
             align: 'center',
             render: (record) => (
                 <Space size="middle">
-                    <Button type="link" onClick={() => handleRole(record.id)}>分配角色</Button>
+                    <Button type="link" onClick={() => handleRole(record.userId)}>分配角色</Button>
                     <Modal
                         title="分配角色"
                         open={isRoleModalOpen}
@@ -174,9 +254,9 @@ export default function UserPage() {
                         <Form form={roleForm}>
                             <Form.Item label="角色" name="roles" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
                                 <Checkbox.Group>
-                                    <Checkbox value="admin">超级管理员</Checkbox>
-                                    <Checkbox value="product">商品管理员</Checkbox>
-                                    <Checkbox value="order">订单管理员</Checkbox>
+                                    {roles.map(role => (
+                                        <Checkbox value={role.roleId}>{role.roleName}</Checkbox>
+                                    ))}
                                 </Checkbox.Group>
                             </Form.Item>
                         </Form>
@@ -191,7 +271,7 @@ export default function UserPage() {
                         cancelText="取消"
                     >
                         <Form form={userForm}>
-                            <Form.Item label="ID" name="id" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                            <Form.Item label="ID" name="userId" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
                                 <Input disabled />
                             </Form.Item>
                             <Form.Item label="用户名" name="username" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
@@ -208,73 +288,92 @@ export default function UserPage() {
                             </Form.Item>
                         </Form>
                     </Modal>
-                    <Button type="link" onClick={() => handleDelete(record.id)}>删除</Button>
+                    <Button type="link" onClick={() => handleDelete(record.userId)}>删除</Button>
                 </Space>
             ),
         },
     ];
 
-    const onSearch = (value, _e, info) => console.log(info?.source, value);
+    const onSearch = (value, _e, info) => {
+        console.log(value, _e, info);
+        if (value) {
+            HttpService.get('/user/search', { keyword: value }).then(res => {
+                if (res.code === 200) {
+                    setData(res.data);
+                }
+            });
+        }
+        else {
+            HttpService.get('/user/list').then(res => {
+                if (res.code === 200) {
+                    setData(res.data);
+                }
+            });
+        }
+    }
 
     return (
-        <div>
-            <Card
-                style={{
-                    width: '100%',
-                    marginBottom: '20px',
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ width: '150px', marginRight: '20px' }}>输入搜索内容：</span>
-                    <Search
-                        placeholder="输入搜索内容"
-                        allowClear
-                        enterButton="搜索"
-                        size="large"
-                        onSearch={onSearch}
-                    />
-                </div>
-            </Card>
-            <Card
-                style={{
-                    width: '100%',
-                    display: 'flex',
-                    marginBottom: '20px',
-                }}
-            >
-                <ProfileOutlined /> 数据列表
-                <Button style={{ position: 'absolute', right: '30px' }} onClick={handleAdd}>添加</Button>
-                <Modal
-                    title="添加用户"
-                    open={isAddModalOpen}
-                    onOk={handleUserOk}
-                    onCancel={handleUserCancel}
-                    okText="确定"
-                    cancelText="取消"
+        <>
+            {contextHolder}
+            <div>
+                <Card
+                    style={{
+                        width: '100%',
+                        marginBottom: '20px',
+                    }}
                 >
-                    <Form form={userForm}>
-                        <Form.Item label="用户名" name="username" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="邮箱" name="email" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="密码" name="password" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Input.Password />
-                        </Form.Item>
-                        <Form.Item label="是否启用" name="isEnabled" valuePropName="checked" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Checkbox />
-                        </Form.Item>
-                    </Form>
-                </Modal>
-            </Card>
-            <Card
-                style={{
-                    width: '100%',
-                }}
-            >
-                <Table columns={columns} dataSource={data} />
-            </Card>
-        </div>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ width: '150px', marginRight: '20px' }}>输入搜索内容：</span>
+                        <Search
+                            placeholder="输入搜索内容"
+                            allowClear
+                            enterButton="搜索"
+                            size="large"
+                            onSearch={onSearch}
+                        />
+                    </div>
+                </Card>
+                <Card
+                    style={{
+                        width: '100%',
+                        display: 'flex',
+                        marginBottom: '20px',
+                    }}
+                >
+                    <ProfileOutlined /> 数据列表
+                    <Button style={{ position: 'absolute', right: '30px' }} onClick={handleAdd}>添加</Button>
+                    <Modal
+                        title="添加用户"
+                        open={isAddModalOpen}
+                        onOk={handleUserOk}
+                        onCancel={handleUserCancel}
+                        okText="确定"
+                        cancelText="取消"
+                    >
+                        <Form form={userForm}>
+                            <Form.Item label="用户名" name="username" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="邮箱" name="email" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="密码" name="password" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Input.Password />
+                            </Form.Item>
+                            <Form.Item label="是否启用" name="isEnabled" valuePropName="checked" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Checkbox />
+                            </Form.Item>
+                        </Form>
+                    </Modal>
+                </Card>
+                <Card
+                    style={{
+                        width: '100%',
+                    }}
+                >
+                    <Table columns={columns} dataSource={data} />
+                </Card>
+            </div>
+        </>
     );
 }
