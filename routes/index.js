@@ -6,6 +6,7 @@ var router = express.Router();
 const {
   searchUser,
   insertUser,
+  updateLastLogin
 } = require('../database/api');
 
 // 拦截所有请求
@@ -46,11 +47,19 @@ router.post('/login', function (req, res, next) {
         message: '服务器错误',
       });
     });
+  // 把登录时间戳更新到数据库
+  updateLastLogin(username)
+    .then(() => {
+      console.log('更新登录时间成功');
+    })
+    .catch(error => {
+      console.error(error);
+    });
 });
 
 router.post('/register', function (req, res, next) {
   console.log(req.body);
-  const { username, email, password } = req.body;
+  const { email } = req.body;
   // 验证邮箱是否已经注册
   searchUser(email, 'email')
     .then(user => {
@@ -60,7 +69,7 @@ router.post('/register', function (req, res, next) {
           message: '邮箱已被注册',
         });
       } else {
-        return insertUser(username, email, password);
+        return insertUser(req.body);
       }
     })
     .then(user => {
