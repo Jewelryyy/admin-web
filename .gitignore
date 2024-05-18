@@ -1,6 +1,6 @@
 # dependencies
 /node_modules
-/database
+/database/config.js
 /.pnp
 .pnp.js
 
