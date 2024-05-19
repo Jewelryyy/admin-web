@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox, Select } from 'antd';
-import { ProfileOutlined } from '@ant-design/icons';
+import { ProfileOutlined, AuditOutlined, HomeOutlined, ShoppingFilled, BarChartOutlined } from '@ant-design/icons';
 
 var initialData = [
     {
@@ -28,6 +28,14 @@ var initialData = [
         isEnabled: true,
     },
 ];
+
+const iconMap = {
+    HomeOutlined: <HomeOutlined />,
+    ShoppingFilled: <ShoppingFilled />,
+    AuditOutlined: <AuditOutlined />,
+    BarChartOutlined: <BarChartOutlined />,
+    // 添加其他的图标...
+};
 
 const nextData = [
     {
@@ -94,6 +102,7 @@ export default function MenuPage() {
         console.log('编辑', record.id);
         menuForm.setFieldsValue({
             menuName: record.menuName,
+            parentMenu: record.parentMenu,
             menuLevel: record.menuLevel,
             frontName: record.frontName,
             icon: record.icon,
@@ -165,6 +174,7 @@ export default function MenuPage() {
             dataIndex: 'icon',
             key: 'icon',
             align: 'center',
+            render: icon => iconMap[icon],
         },
         {
             title: '是否启用',
@@ -219,7 +229,7 @@ export default function MenuPage() {
                                 <Input />
                             </Form.Item>
                             <Form.Item label="前端图标" name="icon" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                                <Input />
+                                <Input suffix={iconMap[menuForm.getFieldValue('icon')]} />
                             </Form.Item>
                             <Form.Item label="是否启用" name="isEnabled" valuePropName="checked" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
                                 <Checkbox />

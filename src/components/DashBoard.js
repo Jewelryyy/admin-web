@@ -21,6 +21,15 @@ const { Header, Sider, Content } = Layout;
 const breadcrumbNames = {
     '/dashboard': '首页',
     '/dashboard/home': '仪表盘',
+    '/dashboard/product': '商品',
+    '/dashboard/product/list': '商品列表',
+    '/dashboard/product/category': '商品分类',
+    '/dashboard/order': '订单',
+    '/dashboard/order/list': '订单列表',
+    '/dashboard/order/settings': '订单设置',
+    '/dashboard/sms': '营销',
+    '/dashboard/sms/couponlst': '优惠券列表',
+    '/dashboard/sms/seckilllst': '秒杀活动列表',
     '/dashboard/auth': '权限',
     '/dashboard/auth/user': '用户管理',
     '/dashboard/auth/role': '角色管理',
@@ -95,9 +104,9 @@ function DashBoard() {
                             label: '商品',
                             children: [
                                 {
-                                    key: '/dashboard/product/manage',
+                                    key: '/dashboard/product/list',
                                     icon: <ShoppingFilled />,
-                                    label: '商品管理',
+                                    label: '商品列表',
                                 },
                                 {
                                     key: '/dashboard/product/category',
@@ -112,14 +121,14 @@ function DashBoard() {
                             label: '订单',
                             children: [
                                 {
-                                    key: '/dashboard/order/manage',
+                                    key: '/dashboard/order/list',
                                     icon: <AuditOutlined />,
-                                    label: '订单管理',
+                                    label: '订单列表',
                                 },
                                 {
-                                    key: '/dashboard/order/statistics',
+                                    key: '/dashboard/order/settings',
                                     icon: <AuditOutlined />,
-                                    label: '订单统计',
+                                    label: '订单设置',
                                 },
                             ],
                         },
@@ -129,14 +138,14 @@ function DashBoard() {
                             label: '营销',
                             children: [
                                 {
-                                    key: '/dashboard/sms/coupon',
+                                    key: '/dashboard/sms/couponlst',
                                     icon: <PropertySafetyFilled />,
-                                    label: '优惠券',
+                                    label: '优惠券列表',
                                 },
                                 {
-                                    key: '/dashboard/sms/seckill',
+                                    key: '/dashboard/sms/seckilllst',
                                     icon: <PropertySafetyFilled />,
-                                    label: '秒杀活动',
+                                    label: '秒杀活动列表',
                                 },
                             ],
                         },

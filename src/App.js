@@ -1,18 +1,16 @@
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { useRoutes } from 'react-router-dom';
 import './App.css';
-import AppRoutes from './routes/appRoutes';
+import routes from './routes';
 import RouteGuard from './routes/RouteGuard';
 
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <RouteGuard>
-          <AppRoutes />
-        </RouteGuard>
-      </div>
-    </Router>
+    <div className="App">
+      <RouteGuard>
+        {useRoutes(routes)}
+      </RouteGuard>
+    </div>
   );
 }
 
