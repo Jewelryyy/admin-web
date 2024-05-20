@@ -1,38 +1,88 @@
-import React, { useState } from 'react';
-import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox, message, Tree } from 'antd';
 import { ProfileOutlined } from '@ant-design/icons';
+import httpService from '../../utils/HttpService';
 
-const { Search } = Input;
+const { TextArea, Search } = Input;
 
-var initialData = [
+const treeData = [
     {
-        id: '1',
-        roleName: '商品管理员',
-        description: '只能查看及操作商品',
-        userNum: 0,
-        addTime: '2022-01-01 12:00:00',
-        isEnabled: true,
+        title: '0-0',
+        key: '0-0',
+        children: [
+            {
+                title: '0-0-0',
+                key: '0-0-0',
+                children: [
+                    {
+                        title: '0-0-0-0',
+                        key: '0-0-0-0',
+                    },
+                    {
+                        title: '0-0-0-1',
+                        key: '0-0-0-1',
+                    },
+                    {
+                        title: '0-0-0-2',
+                        key: '0-0-0-2',
+                    },
+                ],
+            },
+            {
+                title: '0-0-1',
+                key: '0-0-1',
+                children: [
+                    {
+                        title: '0-0-1-0',
+                        key: '0-0-1-0',
+                    },
+                    {
+                        title: '0-0-1-1',
+                        key: '0-0-1-1',
+                    },
+                    {
+                        title: '0-0-1-2',
+                        key: '0-0-1-2',
+                    },
+                ],
+            },
+            {
+                title: '0-0-2',
+                key: '0-0-2',
+            },
+        ],
     },
     {
-        id: '2',
-        roleName: '订单管理员',
-        description: '只能查看及操作订单',
-        userNum: 0,
-        addTime: '2022-01-01 12:00:00',
-        isEnabled: true,
+        title: '0-1',
+        key: '0-1',
+        children: [
+            {
+                title: '0-1-0-0',
+                key: '0-1-0-0',
+            },
+            {
+                title: '0-1-0-1',
+                key: '0-1-0-1',
+            },
+            {
+                title: '0-1-0-2',
+                key: '0-1-0-2',
+            },
+        ],
     },
     {
-        id: '3',
-        roleName: '超级管理员',
-        description: '拥有所有查看和操作功能',
-        userNum: 0,
-        addTime: '2022-01-01 12:00:00',
-        isEnabled: true,
+        title: '0-2',
+        key: '0-2',
     },
 ];
 
 export default function RolePage() {
+    // 创建状态变量和设置函数
+    const [messageApi, contextHolder] = message.useMessage();
+    const [data, setData] = useState([]);
+    const [currentRoleId, setCurrentRoleId] = useState(0); // 用于保存当前角色的ID
     const [roleForm] = Form.useForm();
+    const [menus, setMenus] = useState([]);
     const [menuForm] = Form.useForm();
     const [resourceForm] = Form.useForm();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -40,14 +90,74 @@ export default function RolePage() {
     const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
     const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
 
+    // 树形菜单部分
+    const [expandedKeys, setExpandedKeys] = useState([]);
+    const [checkedKeys, setCheckedKeys] = useState([]);
+    const [selectedKeys, setSelectedKeys] = useState([]);
+    const [autoExpandParent, setAutoExpandParent] = useState(true);
+    const onExpand = (expandedKeysValue) => {
+        console.log('onExpand', expandedKeysValue);
+        // if not set autoExpandParent to false, if children expanded, parent can not collapse.
+        // or, you can remove all expanded children keys.
+        setExpandedKeys(expandedKeysValue);
+        setAutoExpandParent(false);
+    };
+    const onCheck = (checkedKeysValue) => {
+        console.log('onCheck', checkedKeysValue);
+        setCheckedKeys(checkedKeysValue);
+    };
+    const onSelect = (selectedKeysValue, info) => {
+        console.log('onSelect', info);
+        setSelectedKeys(selectedKeysValue);
+    };
+
+    // 在页面挂载时获取数据
+    useEffect(() => {
+        httpService.get('/role/list').then((res) => {
+            if (res.code === 200) {
+                setData(res.data);
+            }
+        });
+    }, []);
+
     const showRoleModal = () => {
         setIsRoleModalOpen(true);
     };
     const handleRoleOk = () => {
-        setIsRoleModalOpen(false);
-        setIsAddModalOpen(false);
-        // 在这里添加分配角色的代码
-        console.log('编辑角色', roleForm.getFieldsValue());
+        // 如果roleModal是打开的，说明是编辑用户信息
+        if (isRoleModalOpen) {
+            httpService.put('/role', roleForm.getFieldsValue()).then(res => {
+                if (res.code === 200) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '更新成功',
+                    });
+                    httpService.get('/role/list').then(res => {
+                        if (res.code === 200) {
+                            setData(res.data);
+                        }
+                    });
+                }
+            });
+            setIsRoleModalOpen(false);
+        }
+        // 如果AddModal是打开的，说明是添加用户
+        if (isAddModalOpen) {
+            httpService.post('/role', roleForm.getFieldsValue()).then(res => {
+                if (res.code === 200) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '添加成功',
+                    });
+                    httpService.get('/role/list').then(res => {
+                        if (res.code === 200) {
+                            setData(res.data);
+                        }
+                    });
+                }
+            });
+            setIsAddModalOpen(false);
+        }
     };
     const handleRoleCancel = () => {
         setIsRoleModalOpen(false);
@@ -61,6 +171,14 @@ export default function RolePage() {
         setIsMenuModalOpen(false);
         // 在这里添加分配菜单的代码
         console.log('分配菜单', menuForm.getFieldsValue());
+        httpService.post('/role/assign', { roleId: currentRoleId, midList: menuForm.getFieldsValue().menus }).then(res => {
+            if (res.code === 200) {
+                messageApi.open({
+                    type: 'success',
+                    content: '分配成功',
+                });
+            }
+        });
     };
     const handleMenuCancel = () => {
         setIsMenuModalOpen(false);
@@ -71,8 +189,8 @@ export default function RolePage() {
     };
     const handleResourceOk = () => {
         setIsResourceModalOpen(false);
-        // 在这里添加分配菜单的代码
-        console.log('分配菜单', resourceForm.getFieldsValue());
+        // 在这里添加分配资源的代码
+        console.log('分配资源', resourceForm.getFieldsValue());
     };
     const handleResourceCancel = () => {
         setIsResourceModalOpen(false);
@@ -81,10 +199,25 @@ export default function RolePage() {
     const handleMenu = (id) => {
         // 在这里添加处理分配菜单的代码
         console.log('分配菜单', id);
-        roleForm.setFieldsValue({
-            roles: ['admin', 'order'],
+        setCurrentRoleId(id);
+        httpService.get('/menu').then(res => {
+            if (res.code === 200) {
+                console.log('菜单', res.data);
+                setMenus(res.data);
+                httpService.get('/role/menulist', { roleId: id }).then(res => {
+                    if (res.code === 200) {
+                        console.log('角色菜单', res.data);
+                        menuForm.setFieldsValue({ menus: res.data });
+                    }
+                });
+                showMenuModal();
+            } else {
+                messageApi.open({
+                    type: 'error',
+                    content: res.message,
+                });
+            }
         });
-        showMenuModal();
     };
 
     const handleResource = (record) => {
@@ -95,11 +228,11 @@ export default function RolePage() {
 
     const handleEdit = (record) => {
         // 在这里添加处理编辑的代码
-        console.log('编辑', record.id);
+        console.log('编辑', record.roleId);
         roleForm.setFieldsValue({
-            username: record.username,
-            email: record.email,
-            password: 'password',
+            roleId: record.roleId,
+            roleName: record.roleName,
+            description: record.description,
             isEnabled: record.isEnabled
         });
         // 打开对话框
@@ -108,14 +241,26 @@ export default function RolePage() {
 
     const handleDelete = (id) => {
         // 找到对应的数据项
-        const item = data.find(item => item.id === id);
+        const item = data.find(item => item.roleId === id);
         if (item) {
             // 删除数据项
             data.splice(data.indexOf(item), 1);
             // 更新组件的状态以重新渲染
             setData([...data]);
         }
-        console.log('删除', roleForm.getFieldsValue());
+        httpService.delete('/role', { id: id }).then(res => {
+            if (res.code === 200) {
+                httpService.get('/role/list').then(res => {
+                    if (res.code === 200) {
+                        setData(res.data);
+                    }
+                });
+                messageApi.open({
+                    type: 'success',
+                    content: '删除成功',
+                });
+            }
+        });
     };
 
     // 添加角色
@@ -124,25 +269,40 @@ export default function RolePage() {
         setIsAddModalOpen(true);
     }
 
-    // 创建状态变量和设置函数
-    const [data, setData] = useState(initialData);
-
     const handleToggleEnabled = (id) => {
         // 找到对应的数据项
-        const item = data.find(item => item.id === id);
+        const item = data.find(item => item.roleId === id);
         if (item) {
             // 切换 isEnabled 属性的值
             item.isEnabled = !item.isEnabled;
+            let param = {
+                roleId: item.roleId,
+                roleName: item.roleName,
+                description: item.description,
+                isEnabled: item.isEnabled
+            };
             // 更新组件的状态以重新渲染
-            setData([...data]);
+            httpService.put('/role', param).then(res => {
+                if (res.code === 200) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '更新成功',
+                    });
+                    httpService.get('/role/list').then(res => {
+                        if (res.code === 200) {
+                            setData(res.data);
+                        }
+                    });
+                }
+            });
         }
     };
 
     const columns = [
         {
             title: '编号',
-            dataIndex: 'id',
-            key: 'id',
+            dataIndex: 'roleId',
+            key: 'roleId',
             align: 'center',
         },
         {
@@ -168,6 +328,10 @@ export default function RolePage() {
             dataIndex: 'addTime',
             key: 'addTime',
             align: 'center',
+            render: text => {
+                const date = new Date(text);
+                return date.toLocaleString();
+            },
         },
         {
             title: '是否启用',
@@ -175,7 +339,7 @@ export default function RolePage() {
             key: 'isEnabled',
             align: 'center',
             render: (isEnabled, record) => (
-                <Switch checked={isEnabled} onChange={() => handleToggleEnabled(record.id)} />
+                <Switch checked={isEnabled} onChange={() => handleToggleEnabled(record.roleId)} />
             ),
         },
         {
@@ -184,7 +348,7 @@ export default function RolePage() {
             align: 'center',
             render: (record) => (
                 <Space size="middle">
-                    <Button type="link" onClick={() => handleMenu(record.id)}>分配菜单</Button>
+                    <Button type="link" onClick={() => handleMenu(record.roleId)}>分配菜单</Button>
                     <Modal
                         title="分配菜单"
                         open={isMenuModalOpen}
@@ -195,7 +359,17 @@ export default function RolePage() {
                     >
                         <Form form={menuForm}>
                             <Form.Item label="菜单" name="roles" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                                todo...
+                                <Tree
+                                    checkable
+                                    onExpand={onExpand}
+                                    expandedKeys={expandedKeys}
+                                    autoExpandParent={autoExpandParent}
+                                    onCheck={onCheck}
+                                    checkedKeys={checkedKeys}
+                                    onSelect={onSelect}
+                                    selectedKeys={selectedKeys}
+                                    treeData={treeData}
+                                />
                             </Form.Item>
                         </Form>
                     </Modal>
@@ -228,6 +402,80 @@ export default function RolePage() {
                                 <Input />
                             </Form.Item>
                             <Form.Item label="描述" name="description" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <TextArea rows={2} />
+                            </Form.Item>
+                            <Form.Item label="是否启用" name="isEnabled" valuePropName="checked" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Checkbox />
+                            </Form.Item>
+                        </Form>
+                    </Modal>
+                    <Button type="link" onClick={() => handleDelete(record.roleId)}>删除</Button>
+                </Space>
+            ),
+        },
+    ];
+
+    const onSearch = (value, _e, info) => {
+        console.log(value, _e, info);
+        if (value) {
+            httpService.get('/role/search', { query: value }).then(res => {
+                if (res.code === 200) {
+                    setData(res.data);
+                }
+            });
+        }
+        else {
+            httpService.get('/role/list').then(res => {
+                if (res.code === 200) {
+                    setData(res.data);
+                }
+            });
+        }
+    };
+
+    return (
+        <>
+            {contextHolder}
+            <div>
+                <Card
+                    style={{
+                        width: '100%',
+                        marginBottom: '20px',
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ width: '150px', marginRight: '20px' }}>输入搜索内容：</span>
+                        <Search
+                            placeholder="输入搜索内容"
+                            allowClear
+                            enterButton="搜索"
+                            size="large"
+                            onSearch={onSearch}
+                        />
+                    </div>
+                </Card>
+                <Card
+                    style={{
+                        width: '100%',
+                        display: 'flex',
+                        marginBottom: '20px',
+                    }}
+                >
+                    <ProfileOutlined /> 数据列表
+                    <Button style={{ position: 'absolute', right: '30px' }} onClick={handleAdd}>添加</Button>
+                    <Modal
+                        title="添加角色"
+                        open={isAddModalOpen}
+                        onOk={handleRoleOk}
+                        onCancel={handleRoleCancel}
+                        okText="确定"
+                        cancelText="取消"
+                    >
+                        <Form form={roleForm}>
+                            <Form.Item label="角色名" name="roleName" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="描述" name="description" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
                                 <Input />
                             </Form.Item>
                             <Form.Item label="是否启用" name="isEnabled" valuePropName="checked" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
@@ -235,70 +483,15 @@ export default function RolePage() {
                             </Form.Item>
                         </Form>
                     </Modal>
-                    <Button type="link" onClick={() => handleDelete(record.id)}>删除</Button>
-                </Space>
-            ),
-        },
-    ];
-
-    const onSearch = (value, _e, info) => console.log(info?.source, value);
-
-    return (
-        <div>
-            <Card
-                style={{
-                    width: '100%',
-                    marginBottom: '20px',
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ width: '150px', marginRight: '20px' }}>输入搜索内容：</span>
-                    <Search
-                        placeholder="输入搜索内容"
-                        allowClear
-                        enterButton="搜索"
-                        size="large"
-                        onSearch={onSearch}
-                    />
-                </div>
-            </Card>
-            <Card
-                style={{
-                    width: '100%',
-                    display: 'flex',
-                    marginBottom: '20px',
-                }}
-            >
-                <ProfileOutlined /> 数据列表
-                <Button style={{ position: 'absolute', right: '30px' }} onClick={handleAdd}>添加</Button>
-                <Modal
-                    title="添加角色"
-                    open={isAddModalOpen}
-                    onOk={handleRoleOk}
-                    onCancel={handleRoleCancel}
-                    okText="确定"
-                    cancelText="取消"
+                </Card>
+                <Card
+                    style={{
+                        width: '100%',
+                    }}
                 >
-                    <Form form={roleForm}>
-                        <Form.Item label="角色名" name="roleName" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="描述" name="description" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="是否启用" name="isEnabled" valuePropName="checked" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Checkbox />
-                        </Form.Item>
-                    </Form>
-                </Modal>
-            </Card>
-            <Card
-                style={{
-                    width: '100%',
-                }}
-            >
-                <Table columns={columns} dataSource={data} />
-            </Card>
-        </div>
+                    <Table columns={columns} dataSource={data} />
+                </Card>
+            </div>
+        </>
     );
 }

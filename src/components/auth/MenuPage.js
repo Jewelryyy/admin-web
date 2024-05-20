@@ -1,73 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox, Select } from 'antd';
-import { ProfileOutlined, AuditOutlined, HomeOutlined, ShoppingFilled, BarChartOutlined } from '@ant-design/icons';
-
-var initialData = [
-    {
-        id: '001',
-        menuName: '首页',
-        menuLevel: 1,
-        frontName: 'home',
-        icon: 'HomeOutlined',
-        isEnabled: true,
-    },
-    {
-        id: '002',
-        menuName: '商品',
-        menuLevel: 1,
-        frontName: 'shopping',
-        icon: 'ShoppingFilled',
-        isEnabled: false,
-    },
-    {
-        id: '003',
-        menuName: '订单',
-        menuLevel: 1,
-        frontName: 'audit',
-        icon: 'AuditOutlined',
-        isEnabled: true,
-    },
-];
+import {
+    ProfileOutlined,
+    AuditOutlined,
+    HomeOutlined,
+    ShoppingFilled,
+    BarChartOutlined,
+    PropertySafetyFilled,
+    KeyOutlined,
+    UserOutlined,
+    UsergroupAddOutlined,
+    ProductOutlined,
+    DatabaseOutlined,
+    HomeFilled,
+} from '@ant-design/icons';
+import HttpService from '../../utils/HttpService';
 
 const iconMap = {
+    HomeFilled: <HomeFilled />,
     HomeOutlined: <HomeOutlined />,
     ShoppingFilled: <ShoppingFilled />,
     AuditOutlined: <AuditOutlined />,
     BarChartOutlined: <BarChartOutlined />,
+    PropertySafetyFilled: <PropertySafetyFilled />,
+    KeyOutlined: <KeyOutlined />,
+    UserOutlined: <UserOutlined />,
+    UsergroupAddOutlined: <UsergroupAddOutlined />,
+    ProductOutlined: <ProductOutlined />,
+    DatabaseOutlined: <DatabaseOutlined />,
     // 添加其他的图标...
 };
 
-const nextData = [
-    {
-        id: '001',
-        menuName: '仪表盘',
-        menuLevel: 2,
-        frontName: 'dashboard',
-        icon: 'BarChartOutlined',
-        isEnabled: true,
-    },
-    {
-        id: '002',
-        menuName: '商品管理',
-        menuLevel: 2,
-        frontName: 'product',
-        icon: 'ShoppingFilled',
-        isEnabled: false,
-    },
-    {
-        id: '003',
-        menuName: '商品分类',
-        menuLevel: 2,
-        frontName: 'category',
-        icon: 'ShoppingFilled',
-        isEnabled: true,
-    },
-];
-
 export default function MenuPage() {
+    // 创建状态变量和设置函数
+    const [data, setData] = useState([]);
+    const [firstLevel, setFirstLevel] = useState([]);
     const [menuForm] = Form.useForm();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+
+    // 在组件挂载时加载数据
+    useEffect(() => {
+        HttpService.get('/menu/first').then((res) => {
+            if (res.code === 200) {
+                setData(res.data);
+                setFirstLevel(res.data);
+            }
+        });
+    }, []);
 
     const showMenuModal = () => {
         setIsMenuModalOpen(true);
@@ -93,16 +73,19 @@ export default function MenuPage() {
 
     const handleNextLevel = (id) => {
         console.log('查看下级', id);
-        // 将nextData赋值给table的dataSource
-        setData(nextData);
+        HttpService.get(`/menu/second`, { id: id }).then((res) => {
+            if (res.code === 200) {
+                setData(res.data);
+            }
+        });
     };
 
     const handleEdit = (record) => {
         // 在这里添加处理编辑的代码
-        console.log('编辑', record.id);
+        console.log('编辑', record.mid);
         menuForm.setFieldsValue({
             menuName: record.menuName,
-            parentMenu: record.parentMenu,
+            parentMenu: record.parentMenu.toString(),
             menuLevel: record.menuLevel,
             frontName: record.frontName,
             icon: record.icon,
@@ -130,9 +113,6 @@ export default function MenuPage() {
         setIsAddModalOpen(true);
     }
 
-    // 创建状态变量和设置函数
-    const [data, setData] = useState(initialData);
-
     const handleToggleEnabled = (id) => {
         // 找到对应的数据项
         const item = data.find(item => item.id === id);
@@ -147,8 +127,8 @@ export default function MenuPage() {
     const columns = [
         {
             title: '编号',
-            dataIndex: 'id',
-            key: 'id',
+            dataIndex: 'mid',
+            key: 'mid',
             align: 'center',
         },
         {
@@ -193,7 +173,7 @@ export default function MenuPage() {
                 <Button
                     type="link"
                     disabled={!hasNextLevel(record)}
-                    onClick={() => handleNextLevel(record.id)}
+                    onClick={() => handleNextLevel(record.mid)}
                 >
                     查看下级
                 </Button>
@@ -218,11 +198,21 @@ export default function MenuPage() {
                             <Form.Item label="菜单名" name="menuName" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
                                 <Input />
                             </Form.Item>
-                            <Form.Item label="上一级菜单" name="parentMenu" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                            <Form.Item
+                                label="上一级菜单"
+                                name="parentMenu"
+                                labelCol={{ span: 6 }}
+                                wrapperCol={{ span: 16 }}
+                                initialValue={record.parentMenu.toString()}
+                            >
                                 <Select>
-                                    <Select.Option value="001">无上级菜单</Select.Option>
-                                    <Select.Option value="002">商品</Select.Option>
-                                    <Select.Option value="003">订单</Select.Option>
+                                    <Select.Option value="0">无上级菜单</Select.Option>
+                                    {/* 渲染一级菜单的内容 */}
+                                    {firstLevel.map((item) => (
+                                        <Select.Option key={item.id} value={item.id.toString()}>
+                                            {item.name}
+                                        </Select.Option>
+                                    ))}
                                 </Select>
                             </Form.Item>
                             <Form.Item label="前端名称" name="frontName" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
