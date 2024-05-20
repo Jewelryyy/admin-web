@@ -27,7 +27,7 @@ const getUserroleById = (id) => {
             }
         })
     })
-}
+};
 
 const getUserroleList = () => {
     return new Promise((resolve, reject) => {
@@ -42,7 +42,7 @@ const getUserroleList = () => {
             }
         })
     })
-}
+};
 
 const searchUserrole = (query) => {
     return new Promise((resolve, reject) => {
@@ -71,7 +71,6 @@ const searchUserrole = (query) => {
     });
 };
 
-//添加
 // 添加
 const insertUserroleList = (body) => {
     const { userId, roleIdList } = body;
@@ -110,7 +109,7 @@ const insertUserroleList = (body) => {
                 .catch(err => reject(err));
         });
     });
-}
+};
 
 const insertUserrole = (userrole) => {
     return new Promise((resolve, reject) => {
@@ -151,7 +150,7 @@ const insertUserrole = (userrole) => {
             }
         });
     });
-}
+};
 //改
 const updateUserrole = (userrole) => {
     return new Promise((resolve, reject) => {
@@ -206,7 +205,7 @@ const updateUserrole = (userrole) => {
             }
         });
     });
-}
+};
 
 //删除
 const deleteUserrole = (param) => {
@@ -220,7 +219,8 @@ const deleteUserrole = (param) => {
             }
         })
     })
-}
+};
+
 //导出方法，在需要使用到的模块中导入
 module.exports = {
     getRoleListByUserId,
@@ -231,4 +231,4 @@ module.exports = {
     insertUserrole,
     updateUserrole,
     deleteUserrole,
-}
+};
