@@ -80,12 +80,21 @@ export default function MenuPage() {
         });
     };
 
+    const handlePrevLevel = (id) => {
+        console.log('查看上级', id);
+        HttpService.get(`/menu/first`, { id: id }).then((res) => {
+            if (res.code === 200) {
+                setData(res.data);
+            }
+        });
+    };
+
     const handleEdit = (record) => {
         // 在这里添加处理编辑的代码
         console.log('编辑', record.mid);
         menuForm.setFieldsValue({
             menuName: record.menuName,
-            parentMenu: record.parentMenu.toString(),
+            parentMenu: record.parentMenu,
             menuLevel: record.menuLevel,
             frontName: record.frontName,
             icon: record.icon,
@@ -170,13 +179,16 @@ export default function MenuPage() {
             key: 'viewChildren',
             align: 'center',
             render: (record) => (
-                <Button
-                    type="link"
-                    disabled={!hasNextLevel(record)}
-                    onClick={() => handleNextLevel(record.mid)}
-                >
-                    查看下级
-                </Button>
+                <>
+                    <Button
+                        type="link"
+                        disabled={!hasNextLevel(record)}
+                        onClick={() => handleNextLevel(record.mid)}
+                    >
+                        查看下级
+                    </Button>
+                    {record.menuLevel !== 1 ? <Button type="link" onClick={() => handlePrevLevel(record.mid)}>查看上级</Button> : ''}
+                </>
             ),
         },
         {
@@ -203,13 +215,13 @@ export default function MenuPage() {
                                 name="parentMenu"
                                 labelCol={{ span: 6 }}
                                 wrapperCol={{ span: 16 }}
-                                initialValue={record.parentMenu.toString()}
+                                initialValue={record.parentMenu}
                             >
                                 <Select>
                                     <Select.Option value="0">无上级菜单</Select.Option>
                                     {/* 渲染一级菜单的内容 */}
                                     {firstLevel.map((item) => (
-                                        <Select.Option key={item.id} value={item.id.toString()}>
+                                        <Select.Option key={item.id} value={item.id}>
                                             {item.name}
                                         </Select.Option>
                                     ))}

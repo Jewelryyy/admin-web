@@ -14,6 +14,7 @@ import UserPage from '../components/auth/UserPage';
 import RolePage from '../components/auth/RolePage';
 import MenuPage from '../components/auth/MenuPage';
 import ResourcePage from '../components/auth/ResourcePage';
+import NotFound from '../components/NotFound';
 
 // 定义路由表
 const routes = [
@@ -80,6 +81,7 @@ const routes = [
             },
         ],
     },
+    { path: '*', element: <NotFound /> },
 ];
 
 export default routes;

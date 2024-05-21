@@ -1,7 +1,7 @@
 export default function Home() {
     return (
         <div>
-            <h1>shouye</h1>
+            <h1>首页</h1>
         </div>
     );
 }
