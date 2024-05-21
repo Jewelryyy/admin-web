@@ -9,7 +9,7 @@ const {
     updateRole,
     deleteRole,
 } = require('../database/roleApi');
-const { getMenusByRoleId, insertRoleMenus } = require('../database/rolemenuApi');
+const { getMenusByRoleId, getMenusByRoleIds, insertRoleMenus } = require('../database/rolemenuApi');
 
 router.get('', function (req, res, next) {
     getRoleById(req.query.id)
@@ -55,6 +55,24 @@ router.get('/menulist', function (req, res, next) {
                 code: 200,
                 message: '成功',
                 data: menus.map(menus => menus.mid),
+            });
+        })
+        .catch(error => {
+            console.error(error);
+            res.json({
+                code: 500,
+                message: '服务器错误',
+            });
+        });
+});
+
+router.post('/menuName', function (req, res, next) {
+    getMenusByRoleIds(req.body.roleIds)
+        .then(menus => {
+            res.json({
+                code: 200,
+                message: '成功',
+                data: menus.map(menus => menus.menuName),
             });
         })
         .catch(error => {

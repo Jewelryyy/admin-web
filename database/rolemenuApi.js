@@ -14,6 +14,27 @@ const getMenusByRoleId = (id) => {
     })
 };
 
+const getMenusByRoleIds = (ids) => {
+    return new Promise((resolve, reject) => {
+        let query = `
+            SELECT menu.*
+            FROM menu
+            WHERE mid IN (
+                SELECT mid
+                FROM rolemenu
+                WHERE roleId IN (?)
+            )
+        `;
+        connection.query(query, [ids], (err, data) => {
+            if (err) {
+                console.error('Error executing query:', err);
+                reject(err);
+            } else {
+                resolve(data);
+            }
+        })
+    })
+};
 
 // 插入
 const insertRoleMenus = (body) => {
@@ -57,5 +78,6 @@ const insertRoleMenus = (body) => {
 
 module.exports = {
     getMenusByRoleId,
-    insertRoleMenus
+    insertRoleMenus,
+    getMenusByRoleIds
 };

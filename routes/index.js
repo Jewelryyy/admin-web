@@ -8,6 +8,7 @@ const {
   insertUser,
   updateLastLogin
 } = require('../database/api');
+const { getRoleListByUserId } = require('../database/userroleApi');
 
 // 拦截所有请求
 // extended: false  方法内部使用 querystring 模块处理请求参数的格式
@@ -28,11 +29,15 @@ router.post('/login', function (req, res, next) {
     .then(users => {
       const user = users[0];
       if (user && user.password === password) {
-        res.json({
-          code: 200,
-          message: '登录成功',
-          token: username,
-        });
+        getRoleListByUserId(user.userId)
+          .then(roles => {
+            res.json({
+              code: 200,
+              message: '登录成功',
+              token: username,
+              role: roles.map(role => role.roleId),
+            });
+          });
       } else {
         res.json({
           code: 400,
