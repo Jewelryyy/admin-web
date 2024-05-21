@@ -95,7 +95,7 @@ export default function UserPage() {
         // 在这里添加处理分配角色的代码
         console.log('分配角色', id);
         setCurrentUserId(id);
-        HttpService.get('/role').then(res => {
+        HttpService.get('/role/list').then(res => {
             if (res.code === 200) {
                 setRoles(res.data);
                 HttpService.get('/user/rolelist', { userId: id }).then(res => {

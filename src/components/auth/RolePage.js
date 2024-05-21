@@ -5,76 +5,13 @@ import httpService from '../../utils/HttpService';
 
 const { TextArea, Search } = Input;
 
-const treeData = [
-    {
-        title: '0-0',
-        key: '0-0',
-        children: [
-            {
-                title: '0-0-0',
-                key: '0-0-0',
-                children: [
-                    {
-                        title: '0-0-0-0',
-                        key: '0-0-0-0',
-                    },
-                    {
-                        title: '0-0-0-1',
-                        key: '0-0-0-1',
-                    },
-                    {
-                        title: '0-0-0-2',
-                        key: '0-0-0-2',
-                    },
-                ],
-            },
-            {
-                title: '0-0-1',
-                key: '0-0-1',
-                children: [
-                    {
-                        title: '0-0-1-0',
-                        key: '0-0-1-0',
-                    },
-                    {
-                        title: '0-0-1-1',
-                        key: '0-0-1-1',
-                    },
-                    {
-                        title: '0-0-1-2',
-                        key: '0-0-1-2',
-                    },
-                ],
-            },
-            {
-                title: '0-0-2',
-                key: '0-0-2',
-            },
-        ],
-    },
-    {
-        title: '0-1',
-        key: '0-1',
-        children: [
-            {
-                title: '0-1-0-0',
-                key: '0-1-0-0',
-            },
-            {
-                title: '0-1-0-1',
-                key: '0-1-0-1',
-            },
-            {
-                title: '0-1-0-2',
-                key: '0-1-0-2',
-            },
-        ],
-    },
-    {
-        title: '0-2',
-        key: '0-2',
-    },
-];
+function transformData(data) {
+    return data.map(item => ({
+        key: item.mid, // 假设每个菜单项都有一个唯一的 id
+        title: item.menuName, // 假设菜单项的名称存储在 name 属性中
+        children: item.children ? transformData(item.children) : [], // 如果有子菜单，递归转换子菜单
+    }));
+}
 
 export default function RolePage() {
     // 创建状态变量和设置函数
@@ -82,8 +19,8 @@ export default function RolePage() {
     const [data, setData] = useState([]);
     const [currentRoleId, setCurrentRoleId] = useState(0); // 用于保存当前角色的ID
     const [roleForm] = Form.useForm();
-    const [menus, setMenus] = useState([]);
-    const [menuForm] = Form.useForm();
+    const [menuList, setMenuList] = useState([]); // 用于保存所有的菜单
+    const [menus, setMenus] = useState([]);  // 用于保存当前角色分配的菜单
     const [resourceForm] = Form.useForm();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
@@ -105,6 +42,7 @@ export default function RolePage() {
     const onCheck = (checkedKeysValue) => {
         console.log('onCheck', checkedKeysValue);
         setCheckedKeys(checkedKeysValue);
+        setMenus(checkedKeysValue);
     };
     const onSelect = (selectedKeysValue, info) => {
         console.log('onSelect', info);
@@ -170,8 +108,8 @@ export default function RolePage() {
     const handleMenuOk = () => {
         setIsMenuModalOpen(false);
         // 在这里添加分配菜单的代码
-        console.log('分配菜单', menuForm.getFieldsValue());
-        httpService.post('/role/assign', { roleId: currentRoleId, midList: menuForm.getFieldsValue().menus }).then(res => {
+        console.log('分配菜单', menus);
+        httpService.post('/role/assign', { roleId: currentRoleId, midList: menus }).then(res => {
             if (res.code === 200) {
                 messageApi.open({
                     type: 'success',
@@ -203,11 +141,11 @@ export default function RolePage() {
         httpService.get('/menu').then(res => {
             if (res.code === 200) {
                 console.log('菜单', res.data);
-                setMenus(res.data);
+                setMenuList(transformData(res.data));
                 httpService.get('/role/menulist', { roleId: id }).then(res => {
                     if (res.code === 200) {
-                        console.log('角色菜单', res.data);
-                        menuForm.setFieldsValue({ menus: res.data });
+                        setMenus(res.data);
+                        setCheckedKeys(res.data);
                     }
                 });
                 showMenuModal();
@@ -357,8 +295,8 @@ export default function RolePage() {
                         okText="确定"
                         cancelText="取消"
                     >
-                        <Form form={menuForm}>
-                            <Form.Item label="菜单" name="roles" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                        <Form>
+                            <Form.Item label="菜单" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
                                 <Tree
                                     checkable
                                     onExpand={onExpand}
@@ -368,7 +306,7 @@ export default function RolePage() {
                                     checkedKeys={checkedKeys}
                                     onSelect={onSelect}
                                     selectedKeys={selectedKeys}
-                                    treeData={treeData}
+                                    treeData={menuList}
                                 />
                             </Form.Item>
                         </Form>

@@ -25,7 +25,7 @@ function Login() {
             .then(res => {
                 console.log(res);
                 if (res.code === 200) {
-                    sessionStorage.setItem('token', res.token);
+                    sessionStorage.setItem('token', JSON.stringify({ token: res.token, role: res.role }));
                     navigate('/dashboard');
                 } else {
                     messageApi.open({
