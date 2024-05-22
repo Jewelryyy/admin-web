@@ -147,6 +147,10 @@ export default function RolePage() {
             if (res.code === 200) {
                 console.log('菜单', res.data);
                 setMenuList(transformData(res.data));
+                // 初始化菜单树的状态
+                let enabledData = res.data.filter(item => item.isEnabled === 1); // 过滤出 isEnabled 等于 1 的元素
+                let mids = enabledData.map(item => item.mid); // 获取这些元素的 mid 属性
+                setExpandedKeys(mids);
                 httpService.get('/role/menulist', { roleId: id }).then(res => {
                     if (res.code === 200) {
                         setMenus(res.data);
