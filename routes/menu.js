@@ -103,8 +103,7 @@ router.put('', function (req, res, next) {
 });
 
 router.delete('', function (req, res, next) {
-    const { id } = req.params;
-    deleteMenu(id)
+    deleteMenu(req.query.id)
         .then(() => {
             res.json({
                 code: 200,

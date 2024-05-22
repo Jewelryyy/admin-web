@@ -88,6 +88,7 @@ const updateMenu = (menu) => {
 
 // 删除菜单
 const deleteMenu = (id) => {
+    console.log('delete: ' + id);
     return new Promise((resolve, reject) => {
         // 删除父菜单和所有子菜单
         let query = "DELETE FROM menu WHERE mid = ? OR parentMenu = ?";

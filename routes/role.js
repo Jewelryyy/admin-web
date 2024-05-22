@@ -72,7 +72,7 @@ router.post('/menuName', function (req, res, next) {
             res.json({
                 code: 200,
                 message: '成功',
-                data: menus.map(menus => menus.menuName),
+                data: menus,
             });
         })
         .catch(error => {
