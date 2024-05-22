@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox, Select } from 'antd';
+import React, { useContext, useState, useEffect } from 'react';
+import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox, Select, message } from 'antd';
 import {
     ProfileOutlined,
     AuditOutlined,
@@ -14,6 +14,7 @@ import {
     DatabaseOutlined,
     HomeFilled,
 } from '@ant-design/icons';
+import { TriggerContext } from '../DashBoard';
 import HttpService from '../../utils/HttpService';
 
 const iconMap = {
@@ -32,7 +33,9 @@ const iconMap = {
 };
 
 export default function MenuPage() {
+    const setTrigger = useContext(TriggerContext); // 获取 setTrigger 函数
     // 创建状态变量和设置函数
+    const [messageApi, contextHolder] = message.useMessage();
     const [data, setData] = useState([]);
     const [firstLevel, setFirstLevel] = useState([]);
     const [menuForm] = Form.useForm();
@@ -53,10 +56,44 @@ export default function MenuPage() {
         setIsMenuModalOpen(true);
     };
     const handleMenuOk = () => {
-        setIsMenuModalOpen(false);
-        setIsAddModalOpen(false);
-        // 在这里添加分配角色的代码
-        console.log('编辑角色', menuForm.getFieldsValue());
+        // 如果MenuModal是打开的，说明是编辑菜单信息
+        if (isMenuModalOpen) {
+            HttpService.put('/menu', menuForm.getFieldsValue()).then(res => {
+                if (res.code === 200) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '更新成功',
+                    });
+                    HttpService.get('/menu/first').then(res => {
+                        if (res.code === 200) {
+                            setData(res.data);
+                            setFirstLevel(res.data);
+                            setTrigger(prevTrigger => prevTrigger + 1);
+                        }
+                    });
+                }
+            });
+            setIsMenuModalOpen(false);
+        }
+        // 如果AddModal是打开的，说明是添加菜单
+        if (isAddModalOpen) {
+            HttpService.post('/menu', menuForm.getFieldsValue()).then(res => {
+                if (res.code === 200) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '添加成功',
+                    });
+                    HttpService.get('/menu/first').then(res => {
+                        if (res.code === 200) {
+                            setData(res.data);
+                            setFirstLevel(res.data);
+                            setTrigger(prevTrigger => prevTrigger + 1);
+                        }
+                    });
+                }
+            });
+            setIsAddModalOpen(false);
+        }
     };
     const handleMenuCancel = () => {
         setIsMenuModalOpen(false);
@@ -113,6 +150,21 @@ export default function MenuPage() {
             // 更新组件的状态以重新渲染
             setData([...data]);
         }
+        HttpService.delete('/menu', { id: id }).then(res => {
+            if (res.code === 200) {
+                HttpService.get('/menu/first').then(res => {
+                    if (res.code === 200) {
+                        setData(res.data);
+                        setFirstLevel(res.data);
+                        messageApi.open({
+                            type: 'success',
+                            content: '删除成功',
+                        });
+                        setTrigger(prevTrigger => prevTrigger + 1);
+                    }
+                });
+            }
+        });
         console.log('删除', menuForm.getFieldsValue());
     };
 
@@ -124,12 +176,34 @@ export default function MenuPage() {
 
     const handleToggleEnabled = (id) => {
         // 找到对应的数据项
-        const item = data.find(item => item.id === id);
+        const item = data.find(item => item.mid === id);
         if (item) {
             // 切换 isEnabled 属性的值
             item.isEnabled = !item.isEnabled;
+            let param = {
+                mid: item.mid,
+                menuName: item.menuName,
+                menuLevel: item.menuLevel,
+                frontName: item.frontName,
+                icon: item.icon,
+                isEnabled: item.isEnabled
+            };
             // 更新组件的状态以重新渲染
-            setData([...data]);
+            HttpService.put('/menu', param).then(res => {
+                if (res.code === 200) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '更新成功',
+                    });
+                    HttpService.get('/menu/first').then(res => {
+                        if (res.code === 200) {
+                            setData(res.data);
+                            setFirstLevel(res.data);
+                            setTrigger(prevTrigger => prevTrigger + 1);
+                        }
+                    });
+                }
+            });
         }
     };
 
@@ -171,7 +245,7 @@ export default function MenuPage() {
             key: 'isEnabled',
             align: 'center',
             render: (isEnabled, record) => (
-                <Switch checked={isEnabled} onChange={() => handleToggleEnabled(record.id)} />
+                <Switch checked={isEnabled} onChange={() => handleToggleEnabled(record.mid)} />
             ),
         },
         {
@@ -218,11 +292,11 @@ export default function MenuPage() {
                                 initialValue={record.parentMenu}
                             >
                                 <Select>
-                                    <Select.Option value="0">无上级菜单</Select.Option>
+                                    <Select.Option value={0}>无上级菜单</Select.Option>
                                     {/* 渲染一级菜单的内容 */}
                                     {firstLevel.map((item) => (
-                                        <Select.Option key={item.id} value={item.id}>
-                                            {item.name}
+                                        <Select.Option key={item.mid} value={item.mid}>
+                                            {item.menuName}
                                         </Select.Option>
                                     ))}
                                 </Select>
@@ -238,61 +312,68 @@ export default function MenuPage() {
                             </Form.Item>
                         </Form>
                     </Modal>
-                    <Button type="link" onClick={() => handleDelete(record.id)}>删除</Button>
+                    <Button type="link" onClick={() => handleDelete(record.mid)}>删除</Button>
                 </Space>
             ),
         },
     ];
 
     return (
-        <div>
-            <Card
-                style={{
-                    width: '100%',
-                    display: 'flex',
-                    marginBottom: '20px',
-                }}
-            >
-                <ProfileOutlined /> 数据列表
-                <Button style={{ position: 'absolute', right: '30px' }} onClick={handleAdd}>添加</Button>
-                <Modal
-                    title="添加菜单"
-                    open={isAddModalOpen}
-                    onOk={handleMenuOk}
-                    onCancel={handleMenuCancel}
-                    okText="确定"
-                    cancelText="取消"
+        <>
+            {contextHolder}
+            <div>
+                <Card
+                    style={{
+                        width: '100%',
+                        display: 'flex',
+                        marginBottom: '20px',
+                    }}
                 >
-                    <Form form={menuForm}>
-                        <Form.Item label="菜单名" name="menuName" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="上一级菜单" name="parentMenu" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Select>
-                                <Select.Option value="001">无上级菜单</Select.Option>
-                                <Select.Option value="002">商品</Select.Option>
-                                <Select.Option value="003">订单</Select.Option>
-                            </Select>
-                        </Form.Item>
-                        <Form.Item label="前端名称" name="frontName" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="前端图标" name="icon" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="是否启用" name="isEnabled" valuePropName="checked" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
-                            <Checkbox />
-                        </Form.Item>
-                    </Form>
-                </Modal>
-            </Card>
-            <Card
-                style={{
-                    width: '100%',
-                }}
-            >
-                <Table columns={columns} dataSource={data} />
-            </Card>
-        </div>
+                    <ProfileOutlined /> 数据列表
+                    <Button style={{ position: 'absolute', right: '30px' }} onClick={handleAdd}>添加</Button>
+                    <Modal
+                        title="添加菜单"
+                        open={isAddModalOpen}
+                        onOk={handleMenuOk}
+                        onCancel={handleMenuCancel}
+                        okText="确定"
+                        cancelText="取消"
+                    >
+                        <Form form={menuForm}>
+                            <Form.Item label="菜单名" name="menuName" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="上一级菜单" name="parentMenu" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Select>
+                                    <Select.Option value={0}>无上级菜单</Select.Option>
+                                    {/* 渲染一级菜单的内容 */}
+                                    {firstLevel.map((item) => (
+                                        <Select.Option key={item.mid} value={item.mid}>
+                                            {item.menuName}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                            <Form.Item label="前端名称" name="frontName" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="前端图标" name="icon" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="是否启用" name="isEnabled" valuePropName="checked" labelCol={{ span: 6 }} wrapperCol={{ span: 16 }}>
+                                <Checkbox />
+                            </Form.Item>
+                        </Form>
+                    </Modal>
+                </Card>
+                <Card
+                    style={{
+                        width: '100%',
+                    }}
+                >
+                    <Table columns={columns} dataSource={data} />
+                </Card>
+            </div>
+        </>
     );
 }

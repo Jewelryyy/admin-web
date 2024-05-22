@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Card, Input, Space, Table, Button, Switch, Modal, Form, Checkbox, message, Tree } from 'antd';
 import { ProfileOutlined } from '@ant-design/icons';
 import httpService from '../../utils/HttpService';
+import { TriggerContext } from '../DashBoard';
 
 const { TextArea, Search } = Input;
 
@@ -14,6 +15,7 @@ function transformData(data) {
 }
 
 export default function RolePage() {
+    const setTrigger = useContext(TriggerContext); // 获取 setTrigger 函数
     // 创建状态变量和设置函数
     const [messageApi, contextHolder] = message.useMessage();
     const [data, setData] = useState([]);
@@ -73,6 +75,7 @@ export default function RolePage() {
                     httpService.get('/role/list').then(res => {
                         if (res.code === 200) {
                             setData(res.data);
+                            setTrigger(prevTrigger => prevTrigger + 1);
                         }
                     });
                 }
@@ -90,6 +93,7 @@ export default function RolePage() {
                     httpService.get('/role/list').then(res => {
                         if (res.code === 200) {
                             setData(res.data);
+                            setTrigger(prevTrigger => prevTrigger + 1);
                         }
                     });
                 }
@@ -115,6 +119,7 @@ export default function RolePage() {
                     type: 'success',
                     content: '分配成功',
                 });
+                setTrigger(prevTrigger => prevTrigger + 1);
             }
         });
     };
@@ -146,6 +151,7 @@ export default function RolePage() {
                     if (res.code === 200) {
                         setMenus(res.data);
                         setCheckedKeys(res.data);
+                        setTrigger(prevTrigger => prevTrigger + 1);
                     }
                 });
                 showMenuModal();
@@ -190,12 +196,12 @@ export default function RolePage() {
             if (res.code === 200) {
                 httpService.get('/role/list').then(res => {
                     if (res.code === 200) {
+                        messageApi.open({
+                            type: 'success',
+                            content: '删除成功',
+                        });
                         setData(res.data);
                     }
-                });
-                messageApi.open({
-                    type: 'success',
-                    content: '删除成功',
                 });
             }
         });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
     HomeFilled,
@@ -17,6 +17,8 @@ import {
 } from '@ant-design/icons';
 import { Breadcrumb, Button, Layout, Menu, theme, Avatar, Dropdown } from 'antd';
 import httpService from '../utils/HttpService';
+
+export const TriggerContext = createContext(); // 创建一个新的 context 对象
 
 const { Header, Sider, Content } = Layout;
 const breadcrumbNames = {
@@ -40,7 +42,7 @@ const breadcrumbNames = {
 
 const sideBarItems = [
     {
-        key: '1',
+        key: '2',
         icon: <HomeFilled />,
         label: '首页',
         children: [
@@ -52,7 +54,7 @@ const sideBarItems = [
         ],
     },
     {
-        key: '2',
+        key: '3',
         icon: <ShoppingFilled />,
         label: '商品',
         children: [
@@ -69,7 +71,7 @@ const sideBarItems = [
         ],
     },
     {
-        key: '3',
+        key: '4',
         icon: <AuditOutlined />,
         label: '订单',
         children: [
@@ -86,7 +88,7 @@ const sideBarItems = [
         ],
     },
     {
-        key: '4',
+        key: '5',
         icon: <PropertySafetyFilled />,
         label: '营销',
         children: [
@@ -103,7 +105,7 @@ const sideBarItems = [
         ],
     },
     {
-        key: '5',
+        key: '6',
         icon: <KeyOutlined />,
         label: '权限',
         children: [
@@ -133,6 +135,7 @@ const sideBarItems = [
 
 function DashBoard() {
     const [sidebar, setSidebar] = useState([]);
+    const [trigger, setTrigger] = useState(0); // 新增的状态变量
     const navigate = useNavigate();
     const location = useLocation();
     const menu = (
@@ -141,21 +144,49 @@ function DashBoard() {
         </Menu>
     );
 
-    // 在页面挂载时调整菜单内容
+    // 在页面挂载时调整菜单内容   
     useEffect(() => {
         let data = JSON.parse(sessionStorage.getItem('token'));
         let roleIds = data.role;
         if (roleIds) {
             httpService.post('/role/menuName', { roleIds: roleIds }).then((res) => {
                 let data = res.data;
-                // 过滤菜单
+                // 添加新的菜单项
                 if (data) {
-                    let newSideBarItems = sideBarItems.filter((item) => {
-                        let children = item.children.filter((child) => {
-                            return data.includes(child.label);
+                    let newSideBarItems = [...sideBarItems];
+                    data.forEach((item) => {
+                        let parentItem = newSideBarItems.find((sidebarItem) => sidebarItem.key === item.parentMenu.toString());
+                        if (parentItem) {
+                            if (!parentItem.children.some((child) => child.label === item.menuName)) {
+                                let newItem = {
+                                    key: item.frontName,
+                                    icon: parentItem.icon,
+                                    label: item.menuName,
+                                };
+                                if (item.menuLevel === 1) {
+                                    newItem.children = [];
+                                }
+                                parentItem.children.push(newItem);
+                            }
+                        } else if (!newSideBarItems.some((sidebarItem) => sidebarItem.label === item.menuName)) {
+                            let newItem = {
+                                key: item.frontName,
+                                icon: sideBarItems[0].icon,
+                                label: item.menuName,
+                            };
+                            if (item.menuLevel === 1) {
+                                newItem.children = [];
+                            }
+                            newSideBarItems.push(newItem);
+                        }
+                    });
+                    // 删除不存在于 data 的菜单项和子菜单项
+                    newSideBarItems = newSideBarItems.filter((sidebarItem) => {
+                        sidebarItem.children = sidebarItem.children.filter((child) => {
+                            return data.some((item) => item.menuName === child.label);
                         });
-                        item.children = children;
-                        return children.length > 0;
+                        // 如果是一级菜单，且没有子菜单，则删除
+                        return sidebarItem.children.length > 0 || data.some((item) => item.menuName === sidebarItem.label);
                     });
                     setSidebar(newSideBarItems);
                 } else {
@@ -163,7 +194,7 @@ function DashBoard() {
                 }
             });
         }
-    }, []);
+    }, [trigger]);
 
     const [breadItem, setBreadItem] = useState([{ href: '/dashboard/home', title: '首页' }]);
     // 在页面挂载时调整面包屑内容
@@ -250,7 +281,9 @@ function DashBoard() {
                         borderRadius: borderRadiusLG,
                     }}
                 >
-                    <Outlet />
+                    <TriggerContext.Provider value={setTrigger}> {/* 提供 setTrigger 函数 */}
+                        <Outlet />
+                    </TriggerContext.Provider>
                 </Content>
             </Layout>
         </Layout>
