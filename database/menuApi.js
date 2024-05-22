@@ -29,10 +29,10 @@ const getSecondLevelMenuById = (id) => {
     })
 };
 
-// 获取树形菜单
+// 获取可用的树形菜单
 const getTreeMenu = () => {
     return new Promise((resolve, reject) => {
-        connection.query("select * from menu", (err, data) => {
+        connection.query("select * from menu where isEnabled = 1", (err, data) => {
             if (err) {
                 console.error('Error executing query:', err);
                 reject(err);

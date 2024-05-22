@@ -38,6 +38,11 @@ router.post('/login', function (req, res, next) {
               role: roles.map(role => role.roleId),
             });
           });
+      } else if (user.isEnabled === 0) {
+        res.json({
+          code: 400,
+          message: '用户已被禁用',
+        });
       } else {
         res.json({
           code: 400,

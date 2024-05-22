@@ -3,7 +3,13 @@ const connection = require('./db')
 //查询
 const getMenusByRoleId = (id) => {
     return new Promise((resolve, reject) => {
-        connection.query("select mid from rolemenu where rmId in (select rmId from rolemenu where roleId = ?)", [id], (err, data) => {
+        let query = `
+            SELECT menu.mid
+            FROM menu
+            INNER JOIN rolemenu ON menu.mid = rolemenu.mid
+            WHERE rolemenu.roleId = ? AND menu.isEnabled = 1
+        `;
+        connection.query(query, [id], (err, data) => {
             if (err) {
                 console.error('Error executing query:', err);
                 reject(err);
@@ -19,7 +25,7 @@ const getMenusByRoleIds = (ids) => {
         let query = `
             SELECT menu.*
             FROM menu
-            WHERE mid IN (
+            WHERE isEnabled = 1 AND mid IN (
                 SELECT mid
                 FROM rolemenu
                 WHERE roleId IN (?)
