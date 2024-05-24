@@ -18,10 +18,10 @@ module.exports = {
 }
 ```
 
-### 启动后端项目`npm start`
+### 启动后端项目
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+启动项目前，请确保您的`node.js`已经正确配置，
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+首先安装必要的依赖，在项目所在路径打开命令行，输入`npm install`，等待依赖下载。
+
+下载完毕后，输入`npm start`运行，即可启动后端。
