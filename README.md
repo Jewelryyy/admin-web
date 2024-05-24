@@ -4,7 +4,9 @@
 
 ## ！！！数据库配置
 
-在database文件夹中，你还需要添加自己的数据库配置文件`config.js`
+运行`/database`文件夹下的数据库脚本`mall.sql`，
+
+在`/database`文件夹中，你还需要添加如下所示的数据库配置文件`config.js`，请注意按自己的数据库替换其中的值。
 ```
 # config.js
 module.exports = {
