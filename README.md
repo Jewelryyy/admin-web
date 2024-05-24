@@ -76,6 +76,10 @@ src                            这是源代码的根目录
 
 或者运行
 
-### `npm build`
+### `npm run build`
 
-生成`/dist`目录，打开目录下的`index.html`文件启动项目。
+生成`/build`目录，
+
+1. 全局安装本地服务包 `npm i -g serve` 该包提供了`serve`命令，用来启动本地服务器。
+2. 在项目根目录中执行命令 `serve -s ./build` 在`build`目录中开启服务器。
+3. 在浏览器中访问：http://localhost:3000/ 预览项目。
