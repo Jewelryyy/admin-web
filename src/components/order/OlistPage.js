@@ -1,7 +1,7 @@
 export default function OlistPage() {
     return (
         <div>
-            <h1>olist</h1>
+            <h1>订单列表</h1>
         </div>
     );
 }

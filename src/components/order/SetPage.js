@@ -1,7 +1,7 @@
 export default function SetPage() {
     return (
         <div>
-            <h1>set</h1>
+            <h1>订单设置</h1>
         </div>
     );
 }
