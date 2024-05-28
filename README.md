@@ -4,9 +4,11 @@
 
 ## ！！！数据库配置
 
-运行`/database`文件夹下的数据库脚本`mall.sql`，
+1.打开命令行，登入`mysql`，创建一个数据库如`mall`并使用该数据库`use mall`，
 
-在`/database`文件夹中，你还需要添加如下所示的数据库配置文件`config.js`，请注意按自己的数据库替换其中的值。
+2.在命令行输入`source PATH_TO_SQL`，将`PATH_TO_SQL`替换成`mall.sql`文件的路径，运行`/database`文件夹下的数据库脚本`mall.sql`，
+
+3.在`/database`文件夹中，你还需要添加如下所示的数据库配置文件`config.js`，请注意按自己的数据库替换其中的值。
 ```
 # config.js
 module.exports = {
