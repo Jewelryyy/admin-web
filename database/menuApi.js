@@ -86,6 +86,20 @@ const updateMenu = (menu) => {
     })
 };
 
+const updateMenuAndChildren = async (menu) => {
+    // 更新菜单
+    await updateMenu(menu);
+
+    // 如果isEnabled被设置为0，更新所有子菜单
+    let children = await getSecondLevelMenuById(menu.mid);
+    if (children) {
+        for (let child of children) {
+            child.isEnabled = menu.isEnabled;
+            await updateMenu(child);
+        }
+    }
+};
+
 // 删除菜单
 const deleteMenu = (id) => {
     console.log('delete: ' + id);
@@ -107,6 +121,7 @@ module.exports = {
     getTreeMenu,
     getFirstLevelMenu,
     getSecondLevelMenuById,
+    updateMenuAndChildren,
     insertMenu,
     updateMenu,
     deleteMenu,

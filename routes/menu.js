@@ -4,9 +4,9 @@ var router = express.Router();
 const {
     getTreeMenu,
     getFirstLevelMenu,
+    updateMenuAndChildren,
     getSecondLevelMenuById,
     insertMenu,
-    updateMenu,
     deleteMenu
 } = require('../database/menuApi');
 
@@ -86,7 +86,7 @@ router.post('', function (req, res, next) {
 });
 
 router.put('', function (req, res, next) {
-    updateMenu(req.body)
+    updateMenuAndChildren(req.body)
         .then(() => {
             res.json({
                 code: 200,
