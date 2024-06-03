@@ -1,9 +1,9 @@
 const connection = require('./db')
 
-// 获取一级菜单
-const getFirstLevelMenu = () => {
+// 获取一级分类
+const getFirstLevelCategory = () => {
     return new Promise((resolve, reject) => {
-        connection.query("select * from menu where menuLevel = 1", (err, data) => {
+        connection.query("select * from category where level = 1", (err, data) => {
             if (err) {
                 console.error('Error executing query:', err);
                 reject(err);
@@ -14,10 +14,10 @@ const getFirstLevelMenu = () => {
     })
 };
 
-// 获取二级菜单
-const getSecondLevelMenuById = (id) => {
+// 获取二级分类
+const getSecondLevelCategoryById = (id) => {
     return new Promise((resolve, reject) => {
-        connection.query("select * from menu where parentMenu = ?", id, (err, data) => {
+        connection.query("select * from category where parentId = ?", id, (err, data) => {
             if (err) {
                 console.error('Error executing query:', err);
                 reject(err);
@@ -28,39 +28,39 @@ const getSecondLevelMenuById = (id) => {
     })
 };
 
-// 获取可用的树形菜单
-const getTreeMenu = () => {
+// 获取可用的树形分类
+const getTreeCategory = () => {
     return new Promise((resolve, reject) => {
-        connection.query("select * from menu where isEnabled = 1", (err, data) => {
+        connection.query("select * from category where isEnabled = 1", (err, data) => {
             if (err) {
                 console.error('Error executing query:', err);
                 reject(err);
             } else {
-                let menu = data;
-                let treeMenu = [];
-                menu.forEach(item => {
-                    if (item.menuLevel === 1) {
-                        treeMenu.push(item);
+                let category = data;
+                let treeCategory = [];
+                category.forEach(item => {
+                    if (item.categoryLevel === 1) {
+                        treeCategory.push(item);
                     }
                 });
-                treeMenu.forEach(item => {
+                treeCategory.forEach(item => {
                     item.children = [];
-                    menu.forEach(child => {
-                        if (child.parentMenu === item.mid) {
+                    category.forEach(child => {
+                        if (child.parentCategory === item.categoryId) {
                             item.children.push(child);
                         }
                     });
                 });
-                resolve(treeMenu);
+                resolve(treeCategory);
             }
         })
     })
 };
 
-// 添加菜单
-const insertMenu = (menu) => {
+// 添加分类
+const insertCategory = (category) => {
     return new Promise((resolve, reject) => {
-        connection.query("insert into menu set ?", menu, (err, data) => {
+        connection.query("insert into category set ?", category, (err, data) => {
             if (err) {
                 console.error('Error executing query:', err);
                 reject(err);
@@ -71,10 +71,10 @@ const insertMenu = (menu) => {
     })
 };
 
-// 更新菜单
-const updateMenu = (menu) => {
+// 更新分类
+const updateCategory = (category) => {
     return new Promise((resolve, reject) => {
-        connection.query("update menu set ? where mid = ?", [menu, menu.mid], (err, data) => {
+        connection.query("update category set ? where categoryId = ?", [category, category.categoryId], (err, data) => {
             if (err) {
                 console.error('Error executing query:', err);
                 reject(err);
@@ -85,26 +85,26 @@ const updateMenu = (menu) => {
     })
 };
 
-const updateMenuAndChildren = async (menu) => {
-    // 更新菜单
-    await updateMenu(menu);
+const updateCategoryAndChildren = async (category) => {
+    // 更新分类
+    await updateCategory(category);
 
-    // 如果isEnabled被设置为0，更新所有子菜单
-    let children = await getSecondLevelMenuById(menu.mid);
+    // 如果isEnabled被设置为0，更新所有子分类
+    let children = await getSecondLevelCategoryById(category.categoryId);
     if (children) {
         for (let child of children) {
-            child.isEnabled = menu.isEnabled;
-            await updateMenu(child);
+            child.isEnabled = category.isEnabled;
+            await updateCategory(child);
         }
     }
 };
 
-// 删除菜单
-const deleteMenu = (id) => {
+// 删除分类
+const deleteCategory = (id) => {
     console.log('delete: ' + id);
     return new Promise((resolve, reject) => {
-        // 删除父菜单和所有子菜单
-        let query = "DELETE FROM menu WHERE mid = ? OR parentMenu = ?";
+        // 删除父分类和所有子分类
+        let query = "DELETE FROM category WHERE categoryId = ? OR parentId = ?";
         connection.query(query, [id, id], (err, data) => {
             if (err) {
                 console.error('Error executing query:', err);
@@ -117,11 +117,11 @@ const deleteMenu = (id) => {
 };
 
 module.exports = {
-    getTreeMenu,
-    getFirstLevelMenu,
-    getSecondLevelMenuById,
-    updateMenuAndChildren,
-    insertMenu,
-    updateMenu,
-    deleteMenu,
+    getTreeCategory,
+    getFirstLevelCategory,
+    getSecondLevelCategoryById,
+    updateCategoryAndChildren,
+    insertCategory,
+    updateCategory,
+    deleteCategory,
 };
